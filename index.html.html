@@ -1,0 +1,1495 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>IA DECODED — Quebre o Código dos Anúncios</title>
+<link href="https://fonts.googleapis.com/css2?family=Space+Mono:wght@400;700&family=Syne:wght@400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap" rel="stylesheet">
+<style>
+:root {
+  --bg: #080a0f;
+  --bg2: #0d1017;
+  --bg3: #12151e;
+  --border: rgba(255,255,255,0.07);
+  --accent: #00ff88;
+  --accent2: #ff3366;
+  --accent3: #7b5fff;
+  --text: #e8eaf0;
+  --muted: #5a6070;
+  --card: rgba(255,255,255,0.03);
+}
+
+* { margin:0; padding:0; box-sizing:border-box; }
+
+body {
+  background: var(--bg);
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* GRID BG */
+body::before {
+  content:'';
+  position:fixed;
+  inset:0;
+  background-image:
+    linear-gradient(rgba(0,255,136,0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(0,255,136,0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  pointer-events:none;
+  z-index:0;
+}
+
+.app { position:relative; z-index:1; display:flex; min-height:100vh; }
+
+/* SIDEBAR */
+.sidebar {
+  width: 240px;
+  min-height: 100vh;
+  background: var(--bg2);
+  border-right: 1px solid var(--border);
+  display: flex;
+  flex-direction: column;
+  padding: 24px 0;
+  position: fixed;
+  top:0; left:0; bottom:0;
+  z-index: 100;
+}
+
+.logo {
+  padding: 0 20px 28px;
+  border-bottom: 1px solid var(--border);
+}
+.logo-text {
+  font-family: 'Syne', sans-serif;
+  font-weight: 800;
+  font-size: 18px;
+  letter-spacing: -0.5px;
+}
+.logo-text span { color: var(--accent); }
+.logo-sub { font-size: 10px; color: var(--muted); letter-spacing: 2px; text-transform:uppercase; margin-top:2px; }
+
+.nav { flex:1; padding: 20px 12px; display:flex; flex-direction:column; gap:4px; }
+
+.nav-item {
+  display:flex; align-items:center; gap:10px;
+  padding: 10px 12px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 13px;
+  color: var(--muted);
+  transition: all 0.15s;
+  border: 1px solid transparent;
+}
+.nav-item:hover { background: var(--card); color: var(--text); }
+.nav-item.active {
+  background: rgba(0,255,136,0.08);
+  color: var(--accent);
+  border-color: rgba(0,255,136,0.15);
+}
+.nav-item svg { width:16px; height:16px; flex-shrink:0; }
+
+.sidebar-bottom { padding: 16px 12px; border-top: 1px solid var(--border); }
+.api-status {
+  display:flex; align-items:center; gap:8px;
+  padding: 10px 12px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  font-size: 11px;
+  color: var(--muted);
+  cursor:pointer;
+  transition: all 0.15s;
+}
+.api-status:hover { border-color: rgba(0,255,136,0.3); color: var(--text); }
+.dot { width:6px; height:6px; border-radius:50%; background: #ff3366; flex-shrink:0; }
+.dot.connected { background: var(--accent); box-shadow: 0 0 6px var(--accent); }
+
+/* MAIN */
+.main { margin-left: 240px; flex:1; min-height:100vh; }
+
+/* TOPBAR */
+.topbar {
+  padding: 20px 32px;
+  border-bottom: 1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+  background: var(--bg2);
+  position:sticky; top:0; z-index:50;
+}
+.topbar-title { font-family:'Syne',sans-serif; font-weight:700; font-size:20px; }
+.topbar-title span { color: var(--accent); }
+
+.credits-badge {
+  display:flex; align-items:center; gap:8px;
+  padding: 8px 16px;
+  background: var(--card);
+  border: 1px solid var(--border);
+  border-radius: 20px;
+  font-size: 12px;
+  color: var(--muted);
+}
+.credits-badge strong { color: var(--accent); font-family:'Space Mono',monospace; }
+
+/* CONTENT */
+.content { padding: 32px; max-width:900px; }
+
+/* PAGES */
+.page { display:none; }
+.page.active { display:block; }
+
+/* SECTION TITLE */
+.section-title {
+  font-family:'Syne',sans-serif;
+  font-weight:700;
+  font-size:24px;
+  margin-bottom:6px;
+}
+.section-sub { color: var(--muted); font-size:14px; margin-bottom:28px; }
+
+/* CARDS */
+.card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  padding: 24px;
+  margin-bottom: 20px;
+  transition: border-color 0.2s;
+}
+.card:hover { border-color: rgba(0,255,136,0.15); }
+
+.card-label {
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 2px;
+  color: var(--accent);
+  font-family:'Space Mono',monospace;
+  margin-bottom: 10px;
+}
+
+/* TEXTAREA */
+textarea, input[type=text], input[type=url], input[type=password] {
+  width:100%;
+  background: var(--bg2);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  padding: 14px 16px;
+  color: var(--text);
+  font-family: 'DM Sans', sans-serif;
+  font-size: 14px;
+  resize: vertical;
+  outline:none;
+  transition: border-color 0.15s;
+}
+textarea:focus, input:focus { border-color: rgba(0,255,136,0.4); }
+textarea { min-height: 120px; }
+
+.input-group { margin-bottom:16px; }
+.input-label { font-size:13px; color: var(--muted); margin-bottom:8px; display:block; }
+
+/* TABS */
+.tabs { display:flex; gap:4px; margin-bottom:20px; background: var(--bg3); padding:4px; border-radius:10px; border:1px solid var(--border); width:fit-content; }
+.tab {
+  padding: 8px 18px;
+  border-radius: 7px;
+  cursor:pointer;
+  font-size:13px;
+  color: var(--muted);
+  transition: all 0.15s;
+  border:none; background:transparent;
+}
+.tab.active { background: rgba(0,255,136,0.12); color: var(--accent); }
+
+/* BUTTON */
+.btn {
+  display:inline-flex; align-items:center; gap:8px;
+  padding: 12px 24px;
+  border-radius: 8px;
+  border: none;
+  cursor:pointer;
+  font-family:'Syne',sans-serif;
+  font-weight:700;
+  font-size:14px;
+  transition: all 0.15s;
+  text-decoration:none;
+}
+.btn-primary {
+  background: var(--accent);
+  color: #000;
+}
+.btn-primary:hover { background: #00e07a; transform:translateY(-1px); box-shadow: 0 8px 24px rgba(0,255,136,0.2); }
+.btn-primary:disabled { opacity:0.4; cursor:not-allowed; transform:none; box-shadow:none; }
+.btn-outline {
+  background: transparent;
+  border: 1px solid var(--border);
+  color: var(--text);
+}
+.btn-outline:hover { border-color: rgba(0,255,136,0.3); color: var(--accent); }
+.btn-sm { padding: 8px 16px; font-size:12px; }
+.btn-danger { background: rgba(255,51,102,0.15); color: var(--accent2); border:1px solid rgba(255,51,102,0.2); }
+
+/* RESULT CARD */
+.result-section {
+  display:none;
+  margin-top:24px;
+  animation: fadeIn 0.3s ease;
+}
+.result-section.visible { display:block; }
+
+@keyframes fadeIn { from { opacity:0; transform:translateY(8px); } to { opacity:1; transform:translateY(0); } }
+
+.result-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius: 12px;
+  overflow:hidden;
+  margin-bottom:16px;
+}
+.result-header {
+  padding: 14px 20px;
+  border-bottom: 1px solid var(--border);
+  display:flex; align-items:center; justify-content:space-between;
+}
+.result-header-left { display:flex; align-items:center; gap:10px; }
+.result-tag {
+  font-size:10px;
+  text-transform:uppercase;
+  letter-spacing:1.5px;
+  padding: 3px 10px;
+  border-radius:4px;
+  font-family:'Space Mono',monospace;
+}
+.tag-analysis { background:rgba(123,95,255,0.15); color: var(--accent3); }
+.tag-mechanism { background:rgba(0,255,136,0.1); color: var(--accent); }
+.tag-offer { background:rgba(255,51,102,0.1); color: var(--accent2); }
+
+.result-body { padding: 20px; }
+
+.mechanism-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:12px; }
+.mechanism-option {
+  background: var(--bg2);
+  border: 2px solid var(--border);
+  border-radius: 10px;
+  padding: 16px;
+  cursor:pointer;
+  transition: all 0.15s;
+  position:relative;
+}
+.mechanism-option:hover { border-color: rgba(0,255,136,0.3); }
+.mechanism-option.selected { border-color: var(--accent); background: rgba(0,255,136,0.05); }
+.mechanism-option.selected::after {
+  content:'✓';
+  position:absolute;
+  top:8px; right:10px;
+  color: var(--accent);
+  font-size:12px;
+  font-weight:700;
+}
+.mechanism-num { font-family:'Space Mono',monospace; font-size:10px; color: var(--muted); margin-bottom:6px; }
+.mechanism-name { font-family:'Syne',sans-serif; font-weight:700; font-size:13px; margin-bottom:6px; color: var(--accent); }
+.mechanism-desc { font-size:12px; color: var(--muted); line-height:1.5; }
+
+.analysis-grid { display:grid; grid-template-columns:1fr 1fr; gap:12px; }
+.analysis-item { background: var(--bg2); border-radius:8px; padding:14px; }
+.analysis-item-label { font-size:10px; text-transform:uppercase; letter-spacing:1.5px; color: var(--muted); margin-bottom:6px; font-family:'Space Mono',monospace; }
+.analysis-item-value { font-size:13px; line-height:1.6; }
+
+.offer-tabs { display:flex; gap:8px; margin-bottom:16px; flex-wrap:wrap; }
+.offer-tab {
+  padding:6px 14px; border-radius:6px; cursor:pointer;
+  font-size:12px; border:1px solid var(--border); background:transparent; color: var(--muted);
+  transition: all 0.15s;
+}
+.offer-tab.active { background:rgba(255,51,102,0.1); color: var(--accent2); border-color: rgba(255,51,102,0.3); }
+
+.offer-content {
+  background: var(--bg2);
+  border-radius:8px;
+  padding:20px;
+  font-size:13px;
+  line-height:1.8;
+  white-space:pre-wrap;
+  color: var(--text);
+  display:none;
+}
+.offer-content.active { display:block; }
+
+/* LOADING */
+.loading-overlay {
+  display:none;
+  position:fixed; inset:0;
+  background: rgba(8,10,15,0.85);
+  z-index:999;
+  align-items:center; justify-content:center;
+  flex-direction:column; gap:16px;
+  backdrop-filter:blur(4px);
+}
+.loading-overlay.visible { display:flex; }
+.spinner {
+  width:40px; height:40px;
+  border:2px solid var(--border);
+  border-top-color: var(--accent);
+  border-radius:50%;
+  animation: spin 0.8s linear infinite;
+}
+@keyframes spin { to { transform:rotate(360deg); } }
+.loading-text { font-family:'Space Mono',monospace; font-size:12px; color: var(--accent); }
+.loading-sub { font-size:12px; color: var(--muted); }
+
+/* HISTORY */
+.history-list { display:flex; flex-direction:column; gap:12px; }
+.history-item {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius:10px;
+  padding:16px 20px;
+  cursor:pointer;
+  transition: all 0.15s;
+  display:flex; align-items:center; justify-content:space-between;
+}
+.history-item:hover { border-color: rgba(0,255,136,0.2); }
+.history-info { flex:1; }
+.history-date { font-size:11px; color: var(--muted); font-family:'Space Mono',monospace; }
+.history-product { font-weight:500; font-size:14px; margin:4px 0; }
+.history-mechanism { font-size:12px; color: var(--accent); }
+
+/* SETTINGS */
+.settings-section { margin-bottom:28px; }
+.settings-title { font-family:'Syne',sans-serif; font-weight:700; font-size:16px; margin-bottom:4px; }
+.settings-sub { font-size:13px; color: var(--muted); margin-bottom:16px; }
+
+/* BADGE */
+.badge {
+  display:inline-flex; align-items:center;
+  padding:3px 10px; border-radius:4px;
+  font-size:11px; font-family:'Space Mono',monospace;
+}
+.badge-success { background:rgba(0,255,136,0.1); color: var(--accent); }
+.badge-error { background:rgba(255,51,102,0.1); color: var(--accent2); }
+
+/* COPY BTN */
+.copy-btn {
+  background:transparent; border:1px solid var(--border);
+  color: var(--muted); border-radius:6px;
+  padding:5px 12px; font-size:11px; cursor:pointer;
+  transition: all 0.15s;
+}
+.copy-btn:hover { border-color: rgba(0,255,136,0.3); color: var(--accent); }
+
+/* EMPTY STATE */
+.empty-state {
+  text-align:center; padding:60px 20px;
+  color: var(--muted);
+}
+.empty-state-icon { font-size:40px; margin-bottom:12px; opacity:0.5; }
+.empty-state-title { font-family:'Syne',sans-serif; font-weight:700; font-size:18px; margin-bottom:8px; color: var(--text); opacity:0.4; }
+.empty-state-sub { font-size:13px; opacity:0.6; }
+
+/* STATS */
+.stats-row { display:grid; grid-template-columns:repeat(3,1fr); gap:16px; margin-bottom:28px; }
+.stat-card {
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius:12px;
+  padding:20px;
+}
+.stat-num { font-family:'Space Mono',monospace; font-size:28px; font-weight:700; color: var(--accent); }
+.stat-label { font-size:12px; color: var(--muted); margin-top:4px; }
+
+/* TOAST */
+.toast {
+  position:fixed; bottom:24px; right:24px;
+  background: var(--bg3);
+  border: 1px solid var(--border);
+  border-radius:10px;
+  padding:14px 20px;
+  font-size:13px;
+  z-index:9999;
+  transform:translateY(100px);
+  opacity:0;
+  transition: all 0.3s;
+  display:flex; align-items:center; gap:10px;
+}
+.toast.show { transform:translateY(0); opacity:1; }
+.toast.success { border-color: rgba(0,255,136,0.3); }
+.toast.error { border-color: rgba(255,51,102,0.3); }
+
+/* DIVIDER */
+.divider { height:1px; background: var(--border); margin:20px 0; }
+
+/* WEAKNESS LIST */
+.weakness-list { list-style:none; display:flex; flex-direction:column; gap:6px; }
+.weakness-list li {
+  display:flex; align-items:flex-start; gap:8px;
+  font-size:13px; color: var(--muted);
+  padding:8px 12px; background: var(--bg2); border-radius:6px;
+}
+.weakness-list li::before { content:'→'; color: var(--accent2); flex-shrink:0; }
+
+@media(max-width:768px) {
+  .sidebar { display:none; }
+  .main { margin-left:0; }
+  .mechanism-grid { grid-template-columns:1fr; }
+  .analysis-grid { grid-template-columns:1fr; }
+  .stats-row { grid-template-columns:1fr; }
+}
+</style>
+</head>
+<body>
+
+<div class="loading-overlay" id="loadingOverlay">
+  <div class="spinner"></div>
+  <div class="loading-text" id="loadingText">ANALISANDO...</div>
+  <div class="loading-sub" id="loadingSub">Extraindo mecanismo único do concorrente</div>
+</div>
+
+<div class="toast" id="toast"></div>
+
+<div class="app">
+  <!-- SIDEBAR -->
+  <aside class="sidebar">
+    <div class="logo">
+      <div class="logo-text">IA <span>DECODED</span></div>
+      <div class="logo-sub">Quebre o código</div>
+    </div>
+    <nav class="nav">
+      <div class="nav-item active" onclick="showPage('analyze')" id="nav-analyze">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="11" cy="11" r="8"/><path d="m21 21-4.35-4.35"/></svg>
+        Nova Análise
+      </div>
+      <div class="nav-item" onclick="showPage('history')" id="nav-history">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M12 8v4l3 3"/><circle cx="12" cy="12" r="10"/></svg>
+        Histórico
+      </div>
+      <div class="nav-item" onclick="showPage('settings')" id="nav-settings">
+        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        Configurações
+      </div>
+    </nav>
+    <div class="sidebar-bottom">
+      <div class="api-status" onclick="showPage('settings')" id="apiStatusEl">
+        <div class="dot" id="apiDot"></div>
+        <span id="apiStatusText">API Key não configurada</span>
+      </div>
+    </div>
+  </aside>
+
+  <!-- MAIN -->
+  <main class="main">
+    <div class="topbar">
+      <div class="topbar-title">IA <span>DECODED</span></div>
+      <div class="credits-badge">
+        Análises: <strong id="creditsUsed">0</strong> / <strong id="creditsTotal">∞</strong>
+      </div>
+    </div>
+
+    <div class="content">
+
+      <!-- PAGE: ANALYZE -->
+      <div class="page active" id="page-analyze">
+        <div class="section-title">Nova Análise</div>
+        <div class="section-sub">Cole o anúncio do concorrente e receba a oferta que vai superar ele.</div>
+
+        <!-- INPUT TABS -->
+        <div class="tabs">
+          <button class="tab active" onclick="switchInputTab('text')" id="tab-text">Colar Texto</button>
+          <button class="tab" onclick="switchInputTab('url')" id="tab-url">Colar URL</button>
+        </div>
+
+        <div class="card" id="inputCard">
+          <div class="input-group" id="textInputGroup">
+            <div class="card-label">Anúncio / VSL do Concorrente</div>
+            <textarea id="competitorText" placeholder="Cole aqui o texto do anúncio, VSL, caption ou copy do concorrente que você quer analisar...&#10;&#10;Quanto mais completo, melhor a análise."></textarea>
+          </div>
+          <div class="input-group" id="urlInputGroup" style="display:none">
+            <div class="card-label">URL do Anúncio / Landing Page</div>
+            <input type="url" id="competitorUrl" placeholder="https://...">
+            <div style="font-size:11px; color:var(--muted); margin-top:6px;">Funciona com landing pages, páginas de vendas e anúncios públicos.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-label">Seu Produto</div>
+          <div class="input-group">
+            <label class="input-label">Nome do produto</label>
+            <input type="text" id="productName" placeholder="Ex: Método X, Curso Y, Serviço Z">
+          </div>
+          <div class="input-group">
+            <label class="input-label">Promessa principal (o que entrega)</label>
+            <textarea id="productPromise" placeholder="Ex: Ensinar gestores de tráfego a criar criativos que convertem 3x mais usando IA..." style="min-height:80px;"></textarea>
+          </div>
+          <div class="input-group">
+            <label class="input-label">Nicho / Público-alvo</label>
+            <input type="text" id="productNiche" placeholder="Ex: Afiliados iniciantes, donos de e-commerce, nutricionistas...">
+          </div>
+        </div>
+
+        <div style="display:flex; gap:12px; align-items:center;">
+          <button class="btn btn-primary" onclick="runAnalysis()" id="analyzeBtn">
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2"/></svg>
+            Analisar e Decodar
+          </button>
+          <button class="btn btn-outline btn-sm" onclick="clearAll()">Limpar</button>
+        </div>
+
+        <!-- RESULTS -->
+        <div class="result-section" id="resultsSection">
+          <div class="divider"></div>
+
+          <!-- ANÁLISE DO CONCORRENTE -->
+          <div class="result-card">
+            <div class="result-header">
+              <div class="result-header-left">
+                <span class="result-tag tag-analysis">ANÁLISE DO CONCORRENTE</span>
+              </div>
+              <button class="copy-btn" onclick="copyResult('analysisData')">Copiar</button>
+            </div>
+            <div class="result-body">
+              <div class="analysis-grid" id="analysisGrid"></div>
+              <div style="margin-top:16px;">
+                <div style="font-size:11px; text-transform:uppercase; letter-spacing:1.5px; color:var(--accent2); font-family:'Space Mono',monospace; margin-bottom:10px;">PONTOS FRACOS (onde você supera)</div>
+                <ul class="weakness-list" id="weaknessList"></ul>
+              </div>
+            </div>
+          </div>
+
+          <!-- MECANISMOS GERADOS -->
+          <div class="result-card">
+            <div class="result-header">
+              <div class="result-header-left">
+                <span class="result-tag tag-mechanism">MECANISMOS ÚNICOS GERADOS</span>
+              </div>
+              <span style="font-size:11px; color:var(--muted);">Escolha 1 para gerar a oferta</span>
+            </div>
+            <div class="result-body">
+              <div class="mechanism-grid" id="mechanismGrid"></div>
+              <div style="margin-top:16px; text-align:right;">
+                <button class="btn btn-primary" onclick="generateOffer()" id="generateOfferBtn" disabled>
+                  <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5"><path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83"/></svg>
+                  Gerar Oferta Completa
+                </button>
+              </div>
+            </div>
+          </div>
+
+          <!-- OFERTA GERADA -->
+          <div class="result-card" id="offerCard" style="display:none;">
+            <div class="result-header">
+              <div class="result-header-left">
+                <span class="result-tag tag-offer">OFERTA COMPLETA GERADA</span>
+              </div>
+              <div style="display:flex;gap:8px;flex-wrap:wrap;">
+                <button class="copy-btn" onclick="copyOffer()">Copiar Tudo</button>
+                <button class="copy-btn" onclick="downloadTxt()" style="color:var(--accent3);border-color:rgba(123,95,255,0.3);">↓ .TXT</button>
+                <button class="copy-btn" onclick="downloadCarrosselPNG()" style="color:var(--accent2);border-color:rgba(255,51,102,0.3);">↓ Carrossel PNG</button>
+                <button class="copy-btn" onclick="toggleImagePrompts()" style="color:var(--accent);border-color:rgba(0,255,136,0.3);">🎨 Prompts IA</button>
+              </div>
+            </div>
+            <div class="result-body">
+              <div class="offer-tabs" id="offerTabs"></div>
+              <div id="offerContents"></div>
+            </div>
+          </div>
+
+          <!-- IMAGE PROMPTS -->
+          <div id="imagePromptsCard" class="result-card" style="display:none;margin-top:16px;">
+            <div class="result-header">
+              <div class="result-header-left">
+                <span class="result-tag tag-mechanism">PROMPTS PARA GERAÇÃO DE IMAGEM</span>
+              </div>
+              <button class="copy-btn" onclick="copyImagePrompts()">Copiar Todos</button>
+            </div>
+            <div class="result-body" id="imagePromptsBody"></div>
+          </div>
+
+          <!-- CAROUSEL PREVIEW -->
+          <div id="carrosselPreviewCard" class="result-card" style="display:none;margin-top:16px;">
+            <div class="result-header">
+              <div class="result-header-left">
+                <span class="result-tag tag-offer">PREVIEW DO CARROSSEL</span>
+              </div>
+              <button class="copy-btn" onclick="downloadAllSlides()" style="color:var(--accent2);border-color:rgba(255,51,102,0.3);">↓ Baixar Todos PNG</button>
+            </div>
+            <div class="result-body">
+              <div id="carrosselSlides" style="display:flex;gap:12px;overflow-x:auto;padding-bottom:8px;"></div>
+              <canvas id="slideCanvas" style="display:none;"></canvas>
+            </div>
+          </div>
+
+        </div>
+      </div>
+
+      <!-- PAGE: HISTORY -->
+      <div class="page" id="page-history">
+        <div class="section-title">Histórico</div>
+        <div class="section-sub">Todas as suas análises salvas localmente.</div>
+
+        <div class="stats-row">
+          <div class="stat-card">
+            <div class="stat-num" id="statTotal">0</div>
+            <div class="stat-label">Análises realizadas</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="statWeek">0</div>
+            <div class="stat-label">Esta semana</div>
+          </div>
+          <div class="stat-card">
+            <div class="stat-num" id="statOffers">0</div>
+            <div class="stat-label">Ofertas geradas</div>
+          </div>
+        </div>
+
+        <div id="historyContainer">
+          <div class="empty-state">
+            <div class="empty-state-icon">🔍</div>
+            <div class="empty-state-title">Nenhuma análise ainda</div>
+            <div class="empty-state-sub">Faça sua primeira análise para ver o histórico aqui.</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PAGE: SETTINGS -->
+      <div class="page" id="page-settings">
+        <div class="section-title">Configurações</div>
+        <div class="section-sub">Configure sua API key e preferências.</div>
+
+        <div class="card settings-section">
+          <div class="settings-title">API Key — Anthropic (Claude)</div>
+          <div class="settings-sub">Necessária para analisar anúncios e gerar ofertas. Sua chave fica salva apenas no seu navegador.</div>
+          <div class="input-group">
+            <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-...">
+          </div>
+          <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
+            <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Salvar API Key</button>
+            <button class="btn btn-outline btn-sm" onclick="testApiKey()">Testar Conexão</button>
+            <button class="btn btn-danger btn-sm" onclick="clearApiKey()">Remover</button>
+          </div>
+          <div style="margin-top:12px;" id="apiTestResult"></div>
+        </div>
+
+        <div class="card settings-section">
+          <div class="settings-title">Dados Salvos</div>
+          <div class="settings-sub">Todas as análises ficam salvas localmente no seu navegador.</div>
+          <button class="btn btn-danger btn-sm" onclick="clearHistory()">Limpar Histórico</button>
+        </div>
+
+        <div class="card">
+          <div class="settings-title">Sobre o IA DECODED</div>
+          <div class="settings-sub" style="margin-bottom:0;">
+            Analisa anúncios e VSLs de concorrentes, extrai o mecanismo único por trás das vendas e gera ofertas superiores prontas pra usar. Baseado nos 10 mecanismos únicos mais validados do mercado brasileiro de infoprodutos.
+          </div>
+        </div>
+      </div>
+
+    </div>
+  </main>
+</div>
+
+<script>
+// ============================================================
+// STATE
+// ============================================================
+let state = {
+  apiKey: localStorage.getItem('ia_decoded_apikey') || '',
+  analyses: JSON.parse(localStorage.getItem('ia_decoded_history') || '[]'),
+  currentAnalysis: null,
+  selectedMechanism: null,
+  currentOffer: null,
+  inputMode: 'text'
+};
+
+// ============================================================
+// INIT
+// ============================================================
+document.addEventListener('DOMContentLoaded', () => {
+  if (state.apiKey) {
+    document.getElementById('apiKeyInput').value = state.apiKey;
+    updateApiStatus(true);
+  }
+  updateHistory();
+  updateStats();
+});
+
+// ============================================================
+// NAVIGATION
+// ============================================================
+function showPage(page) {
+  document.querySelectorAll('.page').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('page-' + page).classList.add('active');
+  document.getElementById('nav-' + page).classList.add('active');
+  if (page === 'history') { updateHistory(); updateStats(); }
+}
+
+function switchInputTab(mode) {
+  state.inputMode = mode;
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.getElementById('tab-' + mode).classList.add('active');
+  document.getElementById('textInputGroup').style.display = mode === 'text' ? 'block' : 'none';
+  document.getElementById('urlInputGroup').style.display = mode === 'url' ? 'block' : 'none';
+}
+
+// ============================================================
+// API KEY
+// ============================================================
+function saveApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key) { showToast('Cole sua API Key primeiro', 'error'); return; }
+  state.apiKey = key;
+  localStorage.setItem('ia_decoded_apikey', key);
+  updateApiStatus(true);
+  showToast('API Key salva com sucesso!', 'success');
+}
+
+function clearApiKey() {
+  state.apiKey = '';
+  localStorage.removeItem('ia_decoded_apikey');
+  document.getElementById('apiKeyInput').value = '';
+  updateApiStatus(false);
+  showToast('API Key removida', 'success');
+}
+
+async function testApiKey() {
+  const key = document.getElementById('apiKeyInput').value.trim();
+  if (!key) { showToast('Cole uma API Key primeiro', 'error'); return; }
+  showLoading('Testando conexão...', 'Verificando sua API Key');
+  try {
+    const res = await callClaude([{role:'user',content:'Responda apenas: OK'}], 'Você é um assistente.', key, 50);
+    hideLoading();
+    document.getElementById('apiTestResult').innerHTML = '<span class="badge badge-success">✓ Conexão funcionando</span>';
+    showToast('API Key válida!', 'success');
+  } catch(e) {
+    hideLoading();
+    document.getElementById('apiTestResult').innerHTML = '<span class="badge badge-error">✗ Erro: ' + e.message + '</span>';
+    showToast('Erro na conexão', 'error');
+  }
+}
+
+function updateApiStatus(connected) {
+  const dot = document.getElementById('apiDot');
+  const text = document.getElementById('apiStatusText');
+  if (connected) {
+    dot.classList.add('connected');
+    text.textContent = 'API conectada';
+  } else {
+    dot.classList.remove('connected');
+    text.textContent = 'API Key não configurada';
+  }
+}
+
+// ============================================================
+// CLAUDE API
+// ============================================================
+async function callClaude(messages, system, apiKey, maxTokens = 2000) {
+  const key = apiKey || state.apiKey;
+  if (!key) throw new Error('Configure sua API Key nas Configurações');
+
+  const res = await fetch('https://api.anthropic.com/v1/messages', {
+    method: 'POST',
+    headers: {
+      'Content-Type': 'application/json',
+      'x-api-key': key,
+      'anthropic-version': '2023-06-01'
+    },
+    body: JSON.stringify({
+      model: 'claude-sonnet-4-20250514',
+      max_tokens: maxTokens,
+      system,
+      messages
+    })
+  });
+
+  if (!res.ok) {
+    const err = await res.json().catch(() => ({}));
+    throw new Error(err?.error?.message || 'Erro na API (status ' + res.status + ')');
+  }
+
+  const data = await res.json();
+  const text = data.content?.[0]?.text || '';
+  return text;
+}
+
+function parseJSON(text) {
+  const clean = text.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
+  return JSON.parse(clean);
+}
+
+// ============================================================
+// SYSTEM PROMPTS
+// ============================================================
+const SYSTEM_ANALYZER = `Você é um especialista em copywriting e análise de anúncios do mercado brasileiro de infoprodutos.
+
+BANCO DE MECANISMOS ÚNICOS VALIDADOS (use como referência):
+1. ELEMENTO OCULTO — "A razão X que ninguém te contou" — revela algo inesperado ligado ao resultado
+2. CULPA EXTERNA — "Não é sua culpa, o sistema foi feito pra você falhar" — tira culpa do lead, apresenta vilão
+3. MECANISMO PROIBIDO — "O método que [autoridade] não quer que você saiba" — exclusividade + segredo
+4. DESCOBERTA ACIDENTAL — "Descobri isso por acaso quando..." — origem inesperada que gera credibilidade
+5. PROVA DE MECANISMO — "Veja exatamente como funciona, passo a passo" — elimina risco percebido
+6. INVERSÃO DE CRENÇA — "Tudo que te ensinaram sobre X está errado" — destrói crença atual, cria vácuo
+7. ATALHO LEGÍTIMO — "Como fazer X em Y tempo sem Z esforço" — atalho + legitimidade
+8. QUEBRA DE PADRÃO — Começa com algo completamente inesperado que não faz sentido imediato
+9. NÚMERO ESPECÍFICO — "Os 3 erros / 7 passos / 21 segredos" — especificidade gera credibilidade
+10. TEXTO SIMPLES — Sem design, sem produção, só a força da ideia (o mecanismo carrega tudo)
+
+Analise o anúncio/VSL fornecido e retorne APENAS um JSON válido, sem markdown, sem texto fora do JSON:
+{
+  "gancho": "o que captura atenção nos primeiros 3 segundos",
+  "mecanismo_unico": "a ideia central diferenciadora em 1-2 frases",
+  "tipo_mecanismo": "qual dos 10 tipos acima melhor descreve",
+  "promessa_principal": "o resultado prometido de forma clara",
+  "estrutura": "como o anúncio é organizado (ex: problema → agitação → solução → oferta)",
+  "objecoes_tratadas": ["objeção 1", "objeção 2"],
+  "pontos_fracos": ["ponto fraco 1 — como você pode superar", "ponto fraco 2 — como você pode superar", "ponto fraco 3 — como você pode superar"]
+}`;
+
+const SYSTEM_MECHANISM = `Você é um especialista em copywriting e criação de mecanismos únicos para o mercado brasileiro de infoprodutos.
+
+BANCO DE MECANISMOS ÚNICOS VALIDADOS:
+1. ELEMENTO OCULTO — "A razão X que ninguém te contou"
+2. CULPA EXTERNA — "Não é sua culpa, o sistema foi feito pra você falhar"
+3. MECANISMO PROIBIDO — "O método que [autoridade] não quer que você saiba"
+4. DESCOBERTA ACIDENTAL — "Descobri isso por acaso quando..."
+5. PROVA DE MECANISMO — "Veja exatamente como funciona, passo a passo"
+6. INVERSÃO DE CRENÇA — "Tudo que te ensinaram sobre X está errado"
+7. ATALHO LEGÍTIMO — "Como fazer X em Y tempo sem Z esforço"
+8. QUEBRA DE PADRÃO — Início completamente inesperado
+9. NÚMERO ESPECÍFICO — "Os 3 erros / 7 passos / 21 segredos"
+10. TEXTO SIMPLES — Força da ideia pura, sem produção
+
+Crie 3 mecanismos únicos SUPERIORES ao do concorrente, usando tipos DIFERENTES entre si.
+Retorne APENAS JSON válido:
+{
+  "mecanismos": [
+    {
+      "tipo": "nome do tipo de mecanismo",
+      "nome": "nome chamativo do mecanismo em até 5 palavras",
+      "descricao": "descrição do mecanismo em 2-3 frases — como ele funciona e por que é superior",
+      "gancho": "frase de gancho pronta pra usar no anúncio"
+    },
+    { ... },
+    { ... }
+  ]
+}`;
+
+const SYSTEM_OFFER = `Você é um copywriter especialista no mercado brasileiro de infoprodutos, afiliados e gestores de tráfego.
+
+Use os padrões dos templates validados: gancho forte, nomear a dor, apresentar mecanismo único, prova social implícita, oferta com ancoragem de valor, urgência real, CTA direto.
+
+Tom: direto, resultado-focado, linguagem natural brasileira. Sem "incrível", sem "revolucionário". Mostre resultados, não adjetivos.
+
+Gere a oferta completa em todos os formatos. Retorne APENAS JSON válido:
+{
+  "caption_instagram": "caption completa para Instagram (com quebras de linha \\n, emojis estratégicos, hashtags no final)",
+  "carrossel": {
+    "slide1": "Slide 1 — Gancho (texto do slide)",
+    "slide2": "Slide 2 — Problema",
+    "slide3": "Slide 3 — Mecanismo único",
+    "slide4": "Slide 4 — Como funciona",
+    "slide5": "Slide 5 — Prova/Resultado",
+    "slide6": "Slide 6 — Oferta + CTA"
+  },
+  "vsl_roteiro": "Roteiro completo de VSL de 3-5 minutos com marcações de tempo [0:00], [0:30] etc",
+  "anuncio_curto": "Copy de anúncio curto para feed (até 125 caracteres no headline + texto)",
+  "stories": "Sequência de 5 stories com o que escrever em cada um"
+}`;
+
+// ============================================================
+// MAIN ANALYSIS FLOW
+// ============================================================
+async function runAnalysis() {
+  if (!state.apiKey) { showToast('Configure sua API Key primeiro', 'error'); showPage('settings'); return; }
+
+  const productName = document.getElementById('productName').value.trim();
+  const productPromise = document.getElementById('productPromise').value.trim();
+  const productNiche = document.getElementById('productNiche').value.trim();
+  const competitorText = document.getElementById('competitorText').value.trim();
+  const competitorUrl = document.getElementById('competitorUrl').value.trim();
+
+  if (!productName || !productPromise) { showToast('Preencha nome e promessa do seu produto', 'error'); return; }
+
+  let inputContent = '';
+  if (state.inputMode === 'text') {
+    if (!competitorText) { showToast('Cole o texto do anúncio para analisar', 'error'); return; }
+    inputContent = competitorText;
+  } else {
+    if (!competitorUrl) { showToast('Cole a URL do anúncio para analisar', 'error'); return; }
+    inputContent = `URL para analisar: ${competitorUrl}\n\nAnalise com base na URL fornecida — extraia os elementos de copy visíveis na página.`;
+  }
+
+  showLoading('ANALISANDO CONCORRENTE...', 'Extraindo mecanismo único e pontos fracos');
+  document.getElementById('analyzeBtn').disabled = true;
+
+  try {
+    // STEP 1: Analyze competitor
+    const analysisPrompt = `Analise este anúncio/VSL do concorrente:\n\n${inputContent}`;
+    const analysisRaw = await callClaude([{role:'user', content: analysisPrompt}], SYSTEM_ANALYZER, null, 1500);
+    const analysis = parseJSON(analysisRaw);
+
+    updateLoading('GERANDO MECANISMOS...', 'Criando 3 variações superiores para o seu produto');
+
+    // STEP 2: Generate mechanisms
+    const mechPrompt = `ANÁLISE DO CONCORRENTE:
+${JSON.stringify(analysis, null, 2)}
+
+MEU PRODUTO:
+Nome: ${productName}
+Promessa: ${productPromise}
+Nicho: ${productNiche || 'infoprodutos/marketing digital'}
+
+Crie 3 mecanismos únicos SUPERIORES ao do concorrente, usando tipos diferentes. Cada um deve ser adaptado especificamente para o meu produto.`;
+
+    const mechRaw = await callClaude([{role:'user', content: mechPrompt}], SYSTEM_MECHANISM, null, 1500);
+    const mechData = parseJSON(mechRaw);
+
+    hideLoading();
+
+    // Save to state
+    state.currentAnalysis = { analysis, mechanisms: mechData.mecanismos, product: { name: productName, promise: productPromise, niche: productNiche } };
+    state.selectedMechanism = null;
+    state.currentOffer = null;
+
+    // Render
+    renderAnalysis(analysis);
+    renderMechanisms(mechData.mecanismos);
+    document.getElementById('offerCard').style.display = 'none';
+    document.getElementById('resultsSection').classList.add('visible');
+    document.getElementById('resultsSection').scrollIntoView({ behavior:'smooth', block:'start' });
+
+    showToast('Análise concluída! Escolha um mecanismo.', 'success');
+
+  } catch(e) {
+    hideLoading();
+    showToast('Erro: ' + e.message, 'error');
+  }
+  document.getElementById('analyzeBtn').disabled = false;
+}
+
+// ============================================================
+// RENDER ANALYSIS
+// ============================================================
+function renderAnalysis(a) {
+  const grid = document.getElementById('analysisGrid');
+  grid.innerHTML = `
+    <div class="analysis-item">
+      <div class="analysis-item-label">Gancho</div>
+      <div class="analysis-item-value">${a.gancho}</div>
+    </div>
+    <div class="analysis-item">
+      <div class="analysis-item-label">Tipo de Mecanismo</div>
+      <div class="analysis-item-value">${a.tipo_mecanismo}</div>
+    </div>
+    <div class="analysis-item">
+      <div class="analysis-item-label">Mecanismo Único</div>
+      <div class="analysis-item-value">${a.mecanismo_unico}</div>
+    </div>
+    <div class="analysis-item">
+      <div class="analysis-item-label">Promessa Principal</div>
+      <div class="analysis-item-value">${a.promessa_principal}</div>
+    </div>
+    <div class="analysis-item">
+      <div class="analysis-item-label">Estrutura</div>
+      <div class="analysis-item-value">${a.estrutura}</div>
+    </div>
+    <div class="analysis-item">
+      <div class="analysis-item-label">Objeções Tratadas</div>
+      <div class="analysis-item-value">${(a.objecoes_tratadas || []).join(' · ')}</div>
+    </div>
+  `;
+
+  const wl = document.getElementById('weaknessList');
+  wl.innerHTML = (a.pontos_fracos || []).map(p => `<li>${p}</li>`).join('');
+}
+
+// ============================================================
+// RENDER MECHANISMS
+// ============================================================
+function renderMechanisms(mechs) {
+  const grid = document.getElementById('mechanismGrid');
+  grid.innerHTML = mechs.map((m, i) => `
+    <div class="mechanism-option" id="mech-${i}" onclick="selectMechanism(${i})">
+      <div class="mechanism-num">OPÇÃO ${i + 1} — ${m.tipo}</div>
+      <div class="mechanism-name">${m.nome}</div>
+      <div class="mechanism-desc">${m.descricao}</div>
+      <div style="margin-top:10px; padding:8px; background:var(--bg); border-radius:6px; font-size:11px; color:var(--accent); font-style:italic;">"${m.gancho}"</div>
+    </div>
+  `).join('');
+}
+
+function selectMechanism(idx) {
+  document.querySelectorAll('.mechanism-option').forEach(el => el.classList.remove('selected'));
+  document.getElementById('mech-' + idx).classList.add('selected');
+  state.selectedMechanism = idx;
+  document.getElementById('generateOfferBtn').disabled = false;
+}
+
+// ============================================================
+// GENERATE OFFER
+// ============================================================
+async function generateOffer() {
+  if (state.selectedMechanism === null) { showToast('Selecione um mecanismo primeiro', 'error'); return; }
+
+  const mech = state.currentAnalysis.mechanisms[state.selectedMechanism];
+  const prod = state.currentAnalysis.product;
+
+  showLoading('GERANDO OFERTA COMPLETA...', 'Criando caption, carrossel, VSL e stories');
+  document.getElementById('generateOfferBtn').disabled = true;
+
+  try {
+    const offerPrompt = `MECANISMO ÚNICO ESCOLHIDO:
+Tipo: ${mech.tipo}
+Nome: ${mech.nome}
+Descrição: ${mech.descricao}
+Gancho: ${mech.gancho}
+
+PRODUTO:
+Nome: ${prod.name}
+Promessa: ${prod.promise}
+Nicho: ${prod.niche || 'infoprodutos/marketing digital'}
+
+Gere a oferta completa em todos os formatos para este produto usando este mecanismo único.`;
+
+    const offerRaw = await callClaude([{role:'user', content: offerPrompt}], SYSTEM_OFFER, null, 3000);
+    const offer = parseJSON(offerRaw);
+    state.currentOffer = offer;
+
+    hideLoading();
+    renderOffer(offer);
+
+    // Save to history
+    saveToHistory();
+
+    showToast('Oferta gerada! Copie e use agora.', 'success');
+
+  } catch(e) {
+    hideLoading();
+    showToast('Erro: ' + e.message, 'error');
+  }
+  document.getElementById('generateOfferBtn').disabled = false;
+}
+
+// ============================================================
+// RENDER OFFER
+// ============================================================
+function renderOffer(offer) {
+  const formats = [
+    { key: 'caption_instagram', label: 'Caption Instagram' },
+    { key: 'anuncio_curto', label: 'Anúncio Curto' },
+    { key: 'carrossel', label: 'Carrossel' },
+    { key: 'vsl_roteiro', label: 'Roteiro VSL' },
+    { key: 'stories', label: 'Stories' }
+  ];
+
+  const tabsEl = document.getElementById('offerTabs');
+  const contentsEl = document.getElementById('offerContents');
+
+  tabsEl.innerHTML = formats.map((f, i) => `
+    <button class="offer-tab ${i === 0 ? 'active' : ''}" onclick="switchOfferTab('${f.key}')" id="otab-${f.key}">${f.label}</button>
+  `).join('');
+
+  contentsEl.innerHTML = formats.map((f, i) => {
+    let content = offer[f.key];
+    if (typeof content === 'object') {
+      content = Object.entries(content).map(([k, v]) => `[${k.toUpperCase()}]\n${v}`).join('\n\n');
+    }
+    return `<div class="offer-content ${i === 0 ? 'active' : ''}" id="ocontent-${f.key}">${content || ''}</div>`;
+  }).join('');
+
+  document.getElementById('offerCard').style.display = 'block';
+  document.getElementById('offerCard').scrollIntoView({ behavior:'smooth', block:'start' });
+}
+
+function switchOfferTab(key) {
+  document.querySelectorAll('.offer-tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.offer-content').forEach(c => c.classList.remove('active'));
+  document.getElementById('otab-' + key)?.classList.add('active');
+  document.getElementById('ocontent-' + key)?.classList.add('active');
+}
+
+// ============================================================
+// HISTORY
+// ============================================================
+function saveToHistory() {
+  const entry = {
+    id: Date.now(),
+    date: new Date().toISOString(),
+    product: state.currentAnalysis.product.name,
+    mechanism: state.currentAnalysis.mechanisms[state.selectedMechanism]?.nome,
+    hasOffer: !!state.currentOffer,
+    data: state.currentAnalysis,
+    offer: state.currentOffer
+  };
+  state.analyses.unshift(entry);
+  if (state.analyses.length > 100) state.analyses = state.analyses.slice(0, 100);
+  localStorage.setItem('ia_decoded_history', JSON.stringify(state.analyses));
+}
+
+function updateHistory() {
+  const container = document.getElementById('historyContainer');
+  if (!state.analyses.length) {
+    container.innerHTML = `<div class="empty-state"><div class="empty-state-icon">🔍</div><div class="empty-state-title">Nenhuma análise ainda</div><div class="empty-state-sub">Faça sua primeira análise para ver o histórico aqui.</div></div>`;
+    return;
+  }
+  container.innerHTML = `<div class="history-list">${state.analyses.map(a => `
+    <div class="history-item">
+      <div class="history-info">
+        <div class="history-date">${new Date(a.date).toLocaleDateString('pt-BR', {day:'2-digit',month:'2-digit',year:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+        <div class="history-product">${a.product}</div>
+        <div class="history-mechanism">${a.mechanism || '—'}</div>
+      </div>
+      <span class="badge ${a.hasOffer ? 'badge-success' : ''}">${a.hasOffer ? '✓ Oferta gerada' : 'Sem oferta'}</span>
+    </div>
+  `).join('')}</div>`;
+}
+
+function updateStats() {
+  document.getElementById('statTotal').textContent = state.analyses.length;
+  const week = state.analyses.filter(a => Date.now() - new Date(a.date) < 7 * 24 * 60 * 60 * 1000).length;
+  document.getElementById('statWeek').textContent = week;
+  document.getElementById('statOffers').textContent = state.analyses.filter(a => a.hasOffer).length;
+}
+
+function clearHistory() {
+  if (!confirm('Limpar todo o histórico?')) return;
+  state.analyses = [];
+  localStorage.removeItem('ia_decoded_history');
+  updateHistory(); updateStats();
+  showToast('Histórico limpo', 'success');
+}
+
+// ============================================================
+// COPY HELPERS
+// ============================================================
+function copyResult(type) {
+  if (!state.currentAnalysis) return;
+  const text = JSON.stringify(state.currentAnalysis.analysis, null, 2);
+  navigator.clipboard.writeText(text).then(() => showToast('Copiado!', 'success'));
+}
+
+function copyOffer() {
+  if (!state.currentOffer) return;
+  const text = Object.entries(state.currentOffer).map(([k, v]) => {
+    const val = typeof v === 'object' ? Object.entries(v).map(([k2,v2]) => `${k2.toUpperCase()}: ${v2}`).join('\n') : v;
+    return `=== ${k.toUpperCase()} ===\n${val}`;
+  }).join('\n\n');
+  navigator.clipboard.writeText(text).then(() => showToast('Oferta copiada!', 'success'));
+}
+
+function clearAll() {
+  document.getElementById('competitorText').value = '';
+  document.getElementById('competitorUrl').value = '';
+  document.getElementById('productName').value = '';
+  document.getElementById('productPromise').value = '';
+  document.getElementById('productNiche').value = '';
+  document.getElementById('resultsSection').classList.remove('visible');
+  state.currentAnalysis = null;
+  state.selectedMechanism = null;
+  state.currentOffer = null;
+}
+
+// ============================================================
+// LOADING
+// ============================================================
+function showLoading(text, sub) {
+  document.getElementById('loadingText').textContent = text;
+  document.getElementById('loadingSub').textContent = sub;
+  document.getElementById('loadingOverlay').classList.add('visible');
+}
+function updateLoading(text, sub) {
+  document.getElementById('loadingText').textContent = text;
+  document.getElementById('loadingSub').textContent = sub;
+}
+function hideLoading() {
+  document.getElementById('loadingOverlay').classList.remove('visible');
+}
+
+// ============================================================
+// TOAST
+// ============================================================
+function showToast(msg, type) {
+  const t = document.getElementById('toast');
+  t.textContent = (type === 'success' ? '✓ ' : '✗ ') + msg;
+  t.className = 'toast show ' + (type || '');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+// ============================================================
+// DOWNLOAD .TXT
+// ============================================================
+function downloadTxt() {
+  if (!state.currentOffer) return;
+  const prod = state.currentAnalysis?.product?.name || 'produto';
+  const mech = state.currentAnalysis?.mechanisms?.[state.selectedMechanism]?.nome || 'mecanismo';
+
+  let txt = `IA DECODED — ${prod.toUpperCase()}\n`;
+  txt += `Mecanismo: ${mech}\n`;
+  txt += `Gerado em: ${new Date().toLocaleDateString('pt-BR')}\n`;
+  txt += '='.repeat(60) + '\n\n';
+
+  const labels = {
+    caption_instagram: 'CAPTION INSTAGRAM',
+    anuncio_curto: 'ANÚNCIO CURTO',
+    carrossel: 'CARROSSEL (6 SLIDES)',
+    vsl_roteiro: 'ROTEIRO VSL',
+    stories: 'STORIES'
+  };
+
+  Object.entries(state.currentOffer).forEach(([k, v]) => {
+    txt += `${'='.repeat(60)}\n${labels[k] || k.toUpperCase()}\n${'='.repeat(60)}\n`;
+    if (typeof v === 'object') {
+      Object.entries(v).forEach(([k2, v2]) => {
+        txt += `\n[${k2.toUpperCase()}]\n${v2}\n`;
+      });
+    } else {
+      txt += v + '\n';
+    }
+    txt += '\n';
+  });
+
+  const blob = new Blob([txt], { type: 'text/plain;charset=utf-8' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = `ia-decoded-${prod.toLowerCase().replace(/\s+/g,'-')}-${Date.now()}.txt`;
+  a.click();
+  showToast('Download iniciado!', 'success');
+}
+
+// ============================================================
+// CARROSSEL PNG
+// ============================================================
+function downloadCarrosselPNG() {
+  if (!state.currentOffer?.carrossel) { showToast('Gere a oferta primeiro', 'error'); return; }
+
+  const slides = state.currentOffer.carrossel;
+  const prod = state.currentAnalysis?.product?.name || 'PRODUTO';
+  const mech = state.currentAnalysis?.mechanisms?.[state.selectedMechanism]?.nome || '';
+
+  const previewCard = document.getElementById('carrosselPreviewCard');
+  const slidesContainer = document.getElementById('carrosselSlides');
+  previewCard.style.display = 'block';
+  slidesContainer.innerHTML = '';
+  previewCard.scrollIntoView({ behavior: 'smooth', block: 'start' });
+
+  const slideEntries = Object.entries(slides);
+  const colors = ['#00ff88','#ff3366','#7b5fff','#00d4ff','#ffaa00','#ff3366'];
+  const W = 1080, H = 1080;
+
+  slideEntries.forEach(([key, text], idx) => {
+    const canvas = document.createElement('canvas');
+    canvas.width = W; canvas.height = H;
+    const ctx = canvas.getContext('2d');
+
+    // Background
+    const grad = ctx.createLinearGradient(0, 0, W, H);
+    grad.addColorStop(0, '#080a0f');
+    grad.addColorStop(1, '#12151e');
+    ctx.fillStyle = grad;
+    ctx.fillRect(0, 0, W, H);
+
+    // Grid lines
+    ctx.strokeStyle = 'rgba(255,255,255,0.04)';
+    ctx.lineWidth = 1;
+    for (let x = 0; x < W; x += 60) { ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,H); ctx.stroke(); }
+    for (let y = 0; y < H; y += 60) { ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(W,y); ctx.stroke(); }
+
+    // Accent line top
+    ctx.fillStyle = colors[idx] || '#00ff88';
+    ctx.fillRect(0, 0, W, 6);
+
+    // Slide number
+    ctx.font = 'bold 28px monospace';
+    ctx.fillStyle = colors[idx] || '#00ff88';
+    ctx.fillText(`${String(idx+1).padStart(2,'0')} / ${String(slideEntries.length).padStart(2,'0')}`, 60, 80);
+
+    // Brand
+    ctx.font = 'bold 22px monospace';
+    ctx.fillStyle = 'rgba(255,255,255,0.3)';
+    ctx.fillText('IA DECODED', W - 220, 80);
+
+    // Slide key label
+    ctx.font = 'bold 20px monospace';
+    ctx.fillStyle = colors[idx] || '#00ff88';
+    ctx.fillText(key.toUpperCase().replace('SLIDE','SLIDE '), 60, 160);
+
+    // Main text - word wrap
+    ctx.font = '400 42px sans-serif';
+    ctx.fillStyle = '#e8eaf0';
+    wrapText(ctx, text, 60, 240, W - 120, 58);
+
+    // Product name bottom
+    ctx.fillStyle = 'rgba(255,255,255,0.2)';
+    ctx.fillRect(0, H - 100, W, 1);
+    ctx.font = 'bold 26px sans-serif';
+    ctx.fillStyle = 'rgba(255,255,255,0.5)';
+    ctx.fillText(prod.toUpperCase(), 60, H - 50);
+
+    // Preview thumbnail
+    const thumb = document.createElement('canvas');
+    thumb.width = 180; thumb.height = 180;
+    const tctx = thumb.getContext('2d');
+    tctx.drawImage(canvas, 0, 0, 180, 180);
+    thumb.style.cssText = 'border-radius:8px;border:1px solid rgba(255,255,255,0.1);cursor:pointer;flex-shrink:0;';
+    thumb.title = `Slide ${idx+1} — clique para baixar`;
+    thumb.onclick = () => downloadSlide(canvas, `slide-${idx+1}-${key}`);
+    slidesContainer.appendChild(thumb);
+
+    // Store canvas for batch download
+    canvas._slideKey = key;
+    canvas._slideIdx = idx + 1;
+    slidesContainer._canvases = slidesContainer._canvases || [];
+    slidesContainer._canvases.push(canvas);
+  });
+
+  showToast('Carrossel gerado! Clique em cada slide para baixar.', 'success');
+}
+
+function wrapText(ctx, text, x, y, maxW, lineH) {
+  const words = text.split(' ');
+  let line = '';
+  let cy = y;
+  const maxY = 900;
+  for (let w of words) {
+    const test = line + w + ' ';
+    if (ctx.measureText(test).width > maxW && line !== '') {
+      ctx.fillText(line.trim(), x, cy);
+      line = w + ' ';
+      cy += lineH;
+      if (cy > maxY) { ctx.fillText('...', x, cy); return; }
+    } else { line = test; }
+  }
+  if (line) ctx.fillText(line.trim(), x, cy);
+}
+
+function downloadSlide(canvas, name) {
+  const a = document.createElement('a');
+  a.href = canvas.toDataURL('image/png');
+  a.download = `ia-decoded-${name}.png`;
+  a.click();
+  showToast(`Slide baixado!`, 'success');
+}
+
+function downloadAllSlides() {
+  const container = document.getElementById('carrosselSlides');
+  const canvases = container._canvases;
+  if (!canvases?.length) { showToast('Gere o carrossel primeiro', 'error'); return; }
+  canvases.forEach((canvas, i) => {
+    setTimeout(() => downloadSlide(canvas, `slide-${canvas._slideIdx}-${canvas._slideKey}`), i * 300);
+  });
+  showToast(`Baixando ${canvases.length} slides...`, 'success');
+}
+
+// ============================================================
+// IMAGE PROMPTS
+// ============================================================
+let imagePromptsVisible = false;
+
+function toggleImagePrompts() {
+  if (imagePromptsVisible) {
+    document.getElementById('imagePromptsCard').style.display = 'none';
+    imagePromptsVisible = false;
+    return;
+  }
+  generateImagePrompts();
+}
+
+async function generateImagePrompts() {
+  if (!state.currentAnalysis || !state.currentOffer) { showToast('Gere a oferta primeiro', 'error'); return; }
+
+  const mech = state.currentAnalysis.mechanisms[state.selectedMechanism];
+  const prod = state.currentAnalysis.product;
+
+  showLoading('GERANDO PROMPTS...', 'Criando prompts para Midjourney e Leonardo AI');
+
+  try {
+    const promptReq = `Crie prompts de imagem para o anúncio deste produto:
+
+Produto: ${prod.name}
+Promessa: ${prod.promise}
+Mecanismo único: ${mech.nome} — ${mech.descricao}
+Gancho: ${mech.gancho}
+
+Crie 4 prompts diferentes para geração de imagem com IA. Retorne APENAS JSON:
+{
+  "prompts": [
+    {
+      "uso": "Criativo de anúncio principal",
+      "midjourney": "prompt completo em inglês para Midjourney com parâmetros --ar 1:1 --v 6",
+      "leonardo": "prompt completo em inglês para Leonardo AI",
+      "descricao_pt": "o que a imagem vai mostrar em português"
+    },
+    {
+      "uso": "Story vertical",
+      "midjourney": "prompt --ar 9:16 --v 6",
+      "leonardo": "prompt",
+      "descricao_pt": "descrição"
+    },
+    {
+      "uso": "Thumbnail de VSL",
+      "midjourney": "prompt --ar 16:9 --v 6",
+      "leonardo": "prompt",
+      "descricao_pt": "descrição"
+    },
+    {
+      "uso": "Capa de carrossel",
+      "midjourney": "prompt --ar 1:1 --v 6",
+      "leonardo": "prompt",
+      "descricao_pt": "descrição"
+    }
+  ]
+}`;
+
+    const raw = await callClaude([{role:'user',content:promptReq}],
+      'Você é um especialista em criação de prompts para IA generativa de imagem aplicada a marketing digital brasileiro. Crie prompts que gerem imagens impactantes, profissionais e que convertem em anúncios. Retorne APENAS JSON válido.',
+      null, 2000);
+
+    const data = parseJSON(raw);
+    hideLoading();
+
+    renderImagePrompts(data.prompts);
+    document.getElementById('imagePromptsCard').style.display = 'block';
+    imagePromptsVisible = true;
+    document.getElementById('imagePromptsCard').scrollIntoView({ behavior:'smooth', block:'start' });
+    showToast('Prompts gerados!', 'success');
+
+  } catch(e) {
+    hideLoading();
+    showToast('Erro: ' + e.message, 'error');
+  }
+}
+
+function renderImagePrompts(prompts) {
+  const body = document.getElementById('imagePromptsBody');
+  body.innerHTML = prompts.map((p, i) => `
+    <div style="background:var(--bg2);border-radius:10px;padding:18px;margin-bottom:14px;border:1px solid var(--border);">
+      <div style="font-size:11px;text-transform:uppercase;letter-spacing:1.5px;color:var(--accent);font-family:'Space Mono',monospace;margin-bottom:8px;">${p.uso}</div>
+      <div style="font-size:13px;color:var(--muted);margin-bottom:12px;">${p.descricao_pt}</div>
+      
+      <div style="margin-bottom:10px;">
+        <div style="font-size:10px;color:var(--accent3);font-family:monospace;margin-bottom:4px;">MIDJOURNEY</div>
+        <div style="background:var(--bg);border-radius:6px;padding:10px;font-size:12px;font-family:monospace;color:var(--text);line-height:1.5;">${p.midjourney}</div>
+        <button class="copy-btn" style="margin-top:6px;" onclick="navigator.clipboard.writeText('${p.midjourney.replace(/'/g,"\'")}').then(()=>showToast('Prompt copiado!','success'))">Copiar</button>
+      </div>
+      
+      <div>
+        <div style="font-size:10px;color:var(--accent2);font-family:monospace;margin-bottom:4px;">LEONARDO AI</div>
+        <div style="background:var(--bg);border-radius:6px;padding:10px;font-size:12px;font-family:monospace;color:var(--text);line-height:1.5;">${p.leonardo}</div>
+        <button class="copy-btn" style="margin-top:6px;" onclick="navigator.clipboard.writeText('${p.leonardo.replace(/'/g,"\'")}').then(()=>showToast('Prompt copiado!','success'))">Copiar</button>
+      </div>
+    </div>
+  `).join('');
+
+  // Store prompts for bulk copy
+  body._prompts = prompts;
+}
+
+function copyImagePrompts() {
+  const body = document.getElementById('imagePromptsBody');
+  if (!body._prompts) return;
+  const text = body._prompts.map(p =>
+    `=== ${p.uso.toUpperCase()} ===\n${p.descricao_pt}\n\nMIDJOURNEY:\n${p.midjourney}\n\nLEONARDO AI:\n${p.leonardo}`
+  ).join('\n\n' + '='.repeat(50) + '\n\n');
+  navigator.clipboard.writeText(text).then(() => showToast('Todos os prompts copiados!', 'success'));
+}
+</script>
+</body>
+</html>
