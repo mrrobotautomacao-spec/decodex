@@ -690,7 +690,7 @@ textarea { min-height: 120px; }
 // STATE
 // ============================================================
 let state = {
-  apiKey: localStorage.getItem('ia_decoded_apikey') || '',
+  apiKey: 'server',
   analyses: JSON.parse(localStorage.getItem('ia_decoded_history') || '[]'),
   currentAnalysis: null,
   selectedMechanism: null,
@@ -702,10 +702,7 @@ let state = {
 // INIT
 // ============================================================
 document.addEventListener('DOMContentLoaded', () => {
-  if (state.apiKey) {
-    document.getElementById('apiKeyInput').value = state.apiKey;
-    updateApiStatus(true);
-  }
+  updateApiStatus(true);
   updateHistory();
   updateStats();
 });
