@@ -885,7 +885,6 @@ Gere a oferta completa em todos os formatos. Retorne APENAS JSON válido:
 // MAIN ANALYSIS FLOW
 // ============================================================
 async function runAnalysis() {
-  if (!state.apiKey) { showToast('Configure sua API Key primeiro', 'error'); showPage('settings'); return; }
 
   const productName = document.getElementById('productName').value.trim();
   const productPromise = document.getElementById('productPromise').value.trim();
