@@ -656,16 +656,15 @@ textarea { min-height: 120px; }
 
         <div class="card settings-section">
           <div class="settings-title">API Key — Anthropic (Claude)</div>
-          <div class="settings-sub">Necessária para analisar anúncios e gerar ofertas. Sua chave fica salva apenas no seu navegador.</div>
-          <div class="input-group">
-            <input type="password" id="apiKeyInput" placeholder="sk-ant-api03-...">
+          <div class="settings-sub">A API Key fica configurada como variável de ambiente no Vercel. Não é necessário inserir aqui.</div>
+          <div style="background:var(--bg2);border-radius:8px;padding:14px;margin-bottom:16px;font-size:13px;color:var(--muted);">
+            <span style="color:var(--accent);font-family:monospace;">ANTHROPIC_API_KEY</span> → configurada no painel do Vercel em <strong>Settings → Environment Variables</strong>
           </div>
           <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap;">
-            <button class="btn btn-primary btn-sm" onclick="saveApiKey()">Salvar API Key</button>
-            <button class="btn btn-outline btn-sm" onclick="testApiKey()">Testar Conexão</button>
-            <button class="btn btn-danger btn-sm" onclick="clearApiKey()">Remover</button>
+            <button class="btn btn-primary btn-sm" onclick="testApiKey()">Testar Conexão</button>
           </div>
           <div style="margin-top:12px;" id="apiTestResult"></div>
+          <input type="hidden" id="apiKeyInput">
         </div>
 
         <div class="card settings-section">
@@ -734,12 +733,8 @@ function switchInputTab(mode) {
 // API KEY
 // ============================================================
 function saveApiKey() {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  if (!key) { showToast('Cole sua API Key primeiro', 'error'); return; }
-  state.apiKey = key;
-  localStorage.setItem('ia_decoded_apikey', key);
+  showToast('API Key configurada no servidor Vercel', 'success');
   updateApiStatus(true);
-  showToast('API Key salva com sucesso!', 'success');
 }
 
 function clearApiKey() {
@@ -751,18 +746,17 @@ function clearApiKey() {
 }
 
 async function testApiKey() {
-  const key = document.getElementById('apiKeyInput').value.trim();
-  if (!key) { showToast('Cole uma API Key primeiro', 'error'); return; }
-  showLoading('Testando conexão...', 'Verificando sua API Key');
+  showLoading('Testando conexão...', 'Verificando API do servidor');
   try {
-    const res = await callClaude([{role:'user',content:'Responda apenas: OK'}], 'Você é um assistente.', key, 50);
+    const res = await callClaude([{role:'user',content:'Responda apenas: OK'}], 'Você é um assistente.', null, 50);
     hideLoading();
     document.getElementById('apiTestResult').innerHTML = '<span class="badge badge-success">✓ Conexão funcionando</span>';
-    showToast('API Key válida!', 'success');
+    updateApiStatus(true);
+    showToast('Servidor conectado!', 'success');
   } catch(e) {
     hideLoading();
     document.getElementById('apiTestResult').innerHTML = '<span class="badge badge-error">✗ Erro: ' + e.message + '</span>';
-    showToast('Erro na conexão', 'error');
+    showToast('Erro: ' + e.message, 'error');
   }
 }
 
@@ -782,16 +776,9 @@ function updateApiStatus(connected) {
 // CLAUDE API
 // ============================================================
 async function callClaude(messages, system, apiKey, maxTokens = 2000) {
-  const key = apiKey || state.apiKey;
-  if (!key) throw new Error('Configure sua API Key nas Configurações');
-
-  const res = await fetch('https://api.anthropic.com/v1/messages', {
+  const res = await fetch('/api/claude', {
     method: 'POST',
-    headers: {
-      'Content-Type': 'application/json',
-      'x-api-key': key,
-      'anthropic-version': '2023-06-01'
-    },
+    headers: { 'Content-Type': 'application/json' },
     body: JSON.stringify({
       model: 'claude-sonnet-4-20250514',
       max_tokens: maxTokens,
