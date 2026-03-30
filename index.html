@@ -772,16 +772,19 @@ function updateApiStatus(connected) {
 // ============================================================
 // CLAUDE API
 // ============================================================
-async function callClaude(messages, system, apiKey, maxTokens = 2000) {
+async function callClaude(messages, system, apiKey, maxTokens = 2000, scrapeUrl = null) {
+  const payload = {
+    model: 'claude-sonnet-4-20250514',
+    max_tokens: maxTokens,
+    system,
+    messages
+  };
+  if (scrapeUrl) payload.scrape_url = scrapeUrl;
+
   const res = await fetch('/api/claude', {
     method: 'POST',
     headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      model: 'claude-sonnet-4-20250514',
-      max_tokens: maxTokens,
-      system,
-      messages
-    })
+    body: JSON.stringify(payload)
   });
 
   if (!res.ok) {
@@ -892,12 +895,14 @@ async function runAnalysis() {
   if (!productName || !productPromise) { showToast('Preencha nome e promessa do seu produto', 'error'); return; }
 
   let inputContent = '';
+  let scrapeUrl = null;
   if (state.inputMode === 'text') {
     if (!competitorText) { showToast('Cole o texto do anúncio para analisar', 'error'); return; }
     inputContent = competitorText;
   } else {
     if (!competitorUrl) { showToast('Cole a URL do anúncio para analisar', 'error'); return; }
-    inputContent = `URL para analisar: ${competitorUrl}\n\nAnalise com base na URL fornecida — extraia os elementos de copy visíveis na página.`;
+    scrapeUrl = competitorUrl;
+    inputContent = 'Analise o conteudo extraido da URL e identifique os elementos de copy.';
   }
 
   showLoading('ANALISANDO CONCORRENTE...', 'Extraindo mecanismo único e pontos fracos');
@@ -906,7 +911,7 @@ async function runAnalysis() {
   try {
     // STEP 1: Analyze competitor
     const analysisPrompt = `Analise este anúncio/VSL do concorrente:\n\n${inputContent}`;
-    const analysisRaw = await callClaude([{role:'user', content: analysisPrompt}], SYSTEM_ANALYZER, null, 1500);
+    const analysisRaw = await callClaude([{role:'user', content: analysisPrompt}], SYSTEM_ANALYZER, null, 1500, scrapeUrl);
     const analysis = parseJSON(analysisRaw);
 
     updateLoading('GERANDO MECANISMOS...', 'Criando 3 variações superiores para o seu produto');
